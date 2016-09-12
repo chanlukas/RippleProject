@@ -24,7 +24,6 @@ end
 %define the filter, in this case a 3D butterworth low-pass filter
 %(at 500hz)
 
-
 Cut=500;
 Fn=30000;
 [b,a]   = butter(3,Cut/Fn,'low');
