@@ -81,6 +81,37 @@ end
 AvgACC=zeros(1,size(ACCData,2));
 AvgACC(2:end)=mean(ACCDataFiltDiffSqrt);
 
+%% Bonsai Postion and Movement
+
+%BonsaiFname = uigetfile('.txt')
+BonsaiFname = 'test.txt';
+
+[condition,x,y]=ImportBonsaiPositionFile(BonsaiFname);  %reads in raw X Y position data
+
+IndexC = strfind(condition, 'True');
+Index = find(not(cellfun('isempty', IndexC)));
+
+% use low pass filter to get rid of sharp, noisy peaks in tracking data
+
+[b,a]=butter(3,0.01,'low'); % filter design is a bit arbitrary here, I just tested out what works
+
+XlowFilt=filter(b,a,x(Index));
+YlowFilt=filter(b,a,y(Index));
+
+Distances=sqrt(diff(XlowFilt).^2+diff(YlowFilt).^2); % gets the distance the center of the mouse moved between consecutive Frames
+Distances(2:length(Distances)+1)=Distances;
+
+if length(Distances)==length(Event3Timestamps)
+
+    Mov=zeros(1,size(Event3Timestamps))
+
+for i=1:size(Event3Timestamps)
+    bigger=find(Event3Timestamps>=i);
+    Mov(i)=Distances(bigger(1));
+end
+
+end
+
 %% Sleep Scoring %%
 
 EEGthres=median(EEGsleep)*3;
