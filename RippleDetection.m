@@ -69,12 +69,12 @@ plotmat(MUAData1(:,100000:120000));
 
 %%
 !! carefull also applies not for all Sessions approach!!
-Ctx=4; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
-Hpc=12; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
+Ctx=1; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
+Hpc=7; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
 
 
 %% Load Sleep Scoring
-[Sleep,SleepLong,EEGslow,AvgACC,Mov]=SleepScoring(8,2,0);
+[Sleep,SleepLong,EEGslow,AvgACC,Mov]=SleepScoring(1,2,0);
 
 %% Figure out best way for Ripple Detection
 
@@ -107,10 +107,10 @@ end
 CtxEnv=envelope(RipFilt(Ctx,:))/std(mean(RipFilt([Ctx,Hpc],:))); %get Envelop of RipFilt Data, otherwise thresholding does not work
 HpcEnv=envelope(RipFilt(Hpc,:))/std(mean(RipFilt([Ctx,Hpc],:)));    %get Envelop of RipFilt Data, otherwise thresholding does not work
 HpcEx=HpcEnv-CtxEnv;
-Trs=6; % Set Threshold for Rip detection manually as multiple of Std 
+Trs=5; % Set Threshold for Rip detection manually as multiple of Std 
 RippleTresh=std(HpcEnv)*Trs;
 % Thresholding by looping through data and asking wheter i is bigger than
-% threshold and i-1 is still >= threshold, this way we get only upward
+% threshold and i-1 is still smaller or equal to threshold, this way we get only upward
 % threshold crossings
 for ii=2:length(HpcEnv)
         if (HpcEnv(ii)>RippleTresh&&HpcEnv(ii-1)<=RippleTresh )
@@ -131,7 +131,7 @@ tresh(RipTS)=RippleTresh;
 plot(tresh)
 hold on
 tresh1(1:length(RipCrossings))=0;
-tresh1(SleepLong)=50;
+tresh1(SleepLong)=5;
 plot(tresh1,'k')
 
 
@@ -172,17 +172,18 @@ plot(tresh3,'k')
 SleepRips=ismember(RipTS,SleepLong);
 
 SleepRipsTS=RipTS(SleepRips==1);
-
+WakeRipsTS=RipTS(SleepRips==0);
 
 pre=.5; %in ms
 pad=0.1
 pre=pre+pad;
 post=0.5; %in ms
-EventLFPMatrix=[];  
+SleepRipsLFPMatrix=[];  
 
 for i=1:length(SleepRipsTS)
     if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
-        EventLFPMatrix=cat(3,EventLFPMatrix,LFPData(:,(SleepRipsTS(i)-((pre*2000)-1)):(SleepRipsTS(i)+post*(2000))));   
+        SleepRipsLFPMatrix=cat(3,EventLFPMatrix,LFPData(:,(SleepRipsTS(i)-((pre*2000)-1)):(SleepRipsTS(i)+post*(2000))));  
+              
     end 
     i
 end
@@ -191,11 +192,11 @@ pre=.5; %in ms
 pad=0.1
 pre=pre+pad;
 post=0.5; %in ms
-EventRipFrqMatrix=[];  
+WakeRipsLFPMatrix=[];  
 
-for i=1:length(SleepRipsTS)
-    if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
-        EventRipFrqMatrix=cat(3,EventRipFrqMatrix,RipFilt(:,(SleepRipsTS(i)-((pre*2000)-1)):(SleepRipsTS(i)+post*(2000))));   
+for i=1:length(WakeRipsTS)
+    if ((WakeRipsTS(i)-((pre*2000)-1))>0&&(WakeRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
+        WakeRipsLFPMatrix=cat(3,WakeRipsLFPMatrix,LFPData(:,(WakeRipsTS(i)-((pre*2000)-1)):(WakeRipsTS(i)+post*(2000))));   
     end 
     i
 end
@@ -205,13 +206,18 @@ end
 
 for i= 1:size(EventLFPMatrix,3)
     
-EventCSDMatrix1(:,:,i)=diff(diff(EventLFPMatrix(:,:,i)));
+SleepRipsCSDMatrix1(:,:,i)=diff(diff(SleepRipsLFPMatrix(:,:,i)));
+end
+
+for i= 1:size(EventLFPMatrix,3)
+    
+WakeRipsCSDMatrix1(:,:,i)=diff(diff(SleepRipsLFPMatrix(:,:,i)));
 end
 
 
 %% Plots
 
-PSTHlfp1=squeeze(mean(EventLFPMatrix(:,:,:),3));
+PSTHlfp1=squeeze(mean(SleepRipsLFPMatrix(:,:,:),3));
 figure(1);
 imagesc(PSTHlfp1(:,pad*2000:end))
 ax = gca;
@@ -221,9 +227,9 @@ ax.XTickLabel = {num2str(-(pre-pad)+(ticks/2000)*1),num2str(-(pre-pad)+(ticks/20
 xlabel('Time (s)')
 ylabel('Recording Site' ) 
 
-PSTHlfp1=squeeze(mean(EventLFPMatrix(:,:,:),3));
+PSTHlfp2=squeeze(mean(WakeRipsLFPMatrix(:,:,:),3));
 figure(2);
-imagesc(PSTHlfp1(:,pad*2000:end))
+imagesc(PSTHlfp2(:,pad*2000:end))
 ax = gca;
 ticks=(((pre-pad+post)*2000)/10);
 ax.XTick = [ticks,ticks*2,ticks*3,ticks*4,ticks*5,ticks*6,ticks*7,ticks*8,ticks*9];
@@ -232,7 +238,7 @@ xlabel('Time (s)')
 ylabel('Recording Site' ) 
 
 
-PSTHcsd1=squeeze(mean(EventCSDMatrix1(:,:,:),3));
+PSTHcsd1=squeeze(mean(SleepRipsCSDMatrix1(:,:,:),3));
 figure(3);
 imagesc(PSTHcsd1(:,pad*2000:end))
 ax = gca;
@@ -242,7 +248,7 @@ ax.XTickLabel = {num2str(-(pre-pad)+(ticks/2000)*1),num2str(-(pre-pad)+(ticks/20
 xlabel('Time (s)')
 ylabel('Recording Site (*150 equals distance from surface)' ) 
 
-PSTHcsd1=squeeze(mean(EventCSDMatrix1(:,:,SleeRips==1),3));
+PSTHcsd1=squeeze(mean(WakeRipsCSDMatrix1(:,:,:),3));
 figure(4);
 imagesc(PSTHcsd1(:,pad*2000:end))
 ax = gca;
@@ -255,12 +261,12 @@ ylabel('Recording Site (*150 equals distance from surface)' )
 %% scratch
 for i = 1:size(EventLFPMatrix,3)
     figure(1)
-    plotmat(EventRipFrqMatrix(:,:,i));
+    plotmat(SleepRipsLFPMatrix(:,:,i));
    % imagesc(test(:,pad*2000:end,i))
-   figure(2)
-   plot(EventRipFrqMatrix(18,:,i))
-   hold on
-   plot(EventRipFrqMatrix(8,:,i),'r')
+%    figure(2)
+%    plot(EventRipFrqMatrix(18,:,i))
+%    hold on
+%    plot(EventRipFrqMatrix(8,:,i),'r')
    pause
     close all
 end
@@ -271,3 +277,20 @@ tresh(HpcExclusiveTS)=HpcExclusiveTresh;
 tresh1(1:length(HpcEnv))=0;
 tresh1(RipTS)=RippleTresh;
 
+
+
+SleepRipsRawMatrix=[]
+for i=1:length(SleepRipsTS)
+    
+        if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
+    
+for ii = 1:32 %loops through all Channels
+    
+        filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filename for each channel
+
+        [Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
+
+        SleepRipsRawMatrix(ii,:,i)=Data(SleepRipsTS(i)*15-(pre*30000)-1:(SleepRipsTS(i)*15+post*30000));
+end
+        end
+end

@@ -4,6 +4,16 @@
 % data from cortical EEG screws, ACC data (and Bonsai Video)
 % recorded with the Open-Ephys system (and dataformat)
 % and Accelerometer Data
+
+%Input:
+% EEGChannel= supposed to be Channel in Cortex
+% Delay= scored sleep that is shorter than this (seconds) will not be
+% included (this is to exclude very brief instances of sleep that are very
+% difficult to sperate from artefacts
+% plot= 1 if data should be plotted
+% BonsaiFname= include if movement should be scored by video tracking and
+% not only by Acc Data.
+
 % Jan Klee 9.9.2016
 
 function [Sleep,SleepLong,EEGslow,AvgACC,Mov]=SleepScoring(EEGChannel,delay,plot,BonsaiFname)
