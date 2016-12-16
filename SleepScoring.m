@@ -94,9 +94,15 @@ StartOfYourRecording=EventTimestamps(1); %% simply finds the first timestamp in 
 CorrectedTimestamps=EventTimestamps-StartOfYourRecording; %% substracts the time from when you pressed 'play' from all other timestamps, this way your timestamps start with 0 at the time when you actually pressed record
 
 TimestampsInSamples=floor(CorrectedTimestamps*30000); %% Transformes timestamps which were in seconds into samples, 30000 is the sampling rate of your recording system
+<<<<<<< HEAD
 
 Event3Timestamps=TimestampsInSamples(indexEvent3ON); %% gets the EventTimestamps with the right Indeces
 
+=======
+
+Event3Timestamps=TimestampsInSamples(indexEvent3ON); %% gets the EventTimestamps with the right Indeces
+
+>>>>>>> origin/master
 %% Bonsai Postion and Movement
 Mov=0;
 if exist('BonsaiFname')==1
