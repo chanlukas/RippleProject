@@ -40,11 +40,9 @@ DataDown=double(Data(1:(30000/samplerate):end)); % downsample 'Data' to 2000hz b
 LFPData(i,:)=filter(b,a,DataDown); % filtering downsapled data, with filter settings above, and saving it in as "LFPData"
 end
 
-<<<<<<< HEAD
+
 %% load and plot small strech of MUA to manually look for cells 
-=======
 %% load and plot small strech of MUAto manually look for cells 
->>>>>>> origin/master
 % and determine cell layer
 
 %define the filter, in this case a 3D butterworth High-pass filter
@@ -73,21 +71,19 @@ plotmat(MUAData1(:,100000:120000));
 
 %%
 !! carefull also applies not for all Sessions approach!!
-<<<<<<< HEAD
 Ctx=1; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
 Hpc=7; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
 
 
 %% Load Sleep Scoring
 [Sleep,SleepLong,EEGslow,AvgACC,Mov]=SleepScoring(1,2,0);
-=======
+
 Ctx=4; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
 Hpc=12; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
 
 
 %% Load Sleep Scoring
 [Sleep,SleepLong,EEGslow,AvgACC,Mov]=SleepScoring(8,2,0);
->>>>>>> origin/master
 
 %% Figure out best way for Ripple Detection
 
@@ -120,17 +116,17 @@ end
 CtxEnv=envelope(RipFilt(Ctx,:))/std(mean(RipFilt([Ctx,Hpc],:))); %get Envelop of RipFilt Data, otherwise thresholding does not work
 HpcEnv=envelope(RipFilt(Hpc,:))/std(mean(RipFilt([Ctx,Hpc],:)));    %get Envelop of RipFilt Data, otherwise thresholding does not work
 HpcEx=HpcEnv-CtxEnv;
-<<<<<<< HEAD
+
 Trs=5; % Set Threshold for Rip detection manually as multiple of Std 
 RippleTresh=std(HpcEnv)*Trs;
 % Thresholding by looping through data and asking wheter i is bigger than
 % threshold and i-1 is still smaller or equal to threshold, this way we get only upward
-=======
+
 Trs=6; % Set Threshold for Rip detection manually as multiple of Std 
 RippleTresh=std(HpcEnv)*Trs;
 % Thresholding by looping through data and asking wheter i is bigger than
 % threshold and i-1 is still >= threshold, this way we get only upward
->>>>>>> origin/master
+
 % threshold crossings
 for ii=2:length(HpcEnv)
         if (HpcEnv(ii)>RippleTresh&&HpcEnv(ii-1)<=RippleTresh )
@@ -151,11 +147,11 @@ tresh(RipTS)=RippleTresh;
 plot(tresh)
 hold on
 tresh1(1:length(RipCrossings))=0;
-<<<<<<< HEAD
+
 tresh1(SleepLong)=5;
-=======
+
 tresh1(SleepLong)=50;
->>>>>>> origin/master
+
 plot(tresh1,'k')
 
 
@@ -196,30 +192,27 @@ plot(tresh3,'k')
 SleepRips=ismember(RipTS,SleepLong);
 
 SleepRipsTS=RipTS(SleepRips==1);
-<<<<<<< HEAD
-WakeRipsTS=RipTS(SleepRips==0);
-=======
 
->>>>>>> origin/master
+WakeRipsTS=RipTS(SleepRips==0);
+
+
 
 pre=.5; %in ms
 pad=0.1
 pre=pre+pad;
 post=0.5; %in ms
-<<<<<<< HEAD
 SleepRipsLFPMatrix=[];  
 
 for i=1:length(SleepRipsTS)
     if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
         SleepRipsLFPMatrix=cat(3,EventLFPMatrix,LFPData(:,(SleepRipsTS(i)-((pre*2000)-1)):(SleepRipsTS(i)+post*(2000))));  
               
-=======
+
 EventLFPMatrix=[];  
 
 for i=1:length(SleepRipsTS)
     if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
         EventLFPMatrix=cat(3,EventLFPMatrix,LFPData(:,(SleepRipsTS(i)-((pre*2000)-1)):(SleepRipsTS(i)+post*(2000))));   
->>>>>>> origin/master
     end 
     i
 end
@@ -228,13 +221,13 @@ pre=.5; %in ms
 pad=0.1
 pre=pre+pad;
 post=0.5; %in ms
-<<<<<<< HEAD
+
 WakeRipsLFPMatrix=[];  
 
 for i=1:length(WakeRipsTS)
     if ((WakeRipsTS(i)-((pre*2000)-1))>0&&(WakeRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
         WakeRipsLFPMatrix=cat(3,WakeRipsLFPMatrix,LFPData(:,(WakeRipsTS(i)-((pre*2000)-1)):(WakeRipsTS(i)+post*(2000))));   
-=======
+
 EventRipFrqMatrix=[];  
 
 for i=1:length(SleepRipsTS)
@@ -249,27 +242,20 @@ end
 %% CSD  Y = diff(f)/h
 
 for i= 1:size(EventLFPMatrix,3)
-    
-<<<<<<< HEAD
 SleepRipsCSDMatrix1(:,:,i)=diff(diff(SleepRipsLFPMatrix(:,:,i)));
 end
 
 for i= 1:size(EventLFPMatrix,3)
     
 WakeRipsCSDMatrix1(:,:,i)=diff(diff(SleepRipsLFPMatrix(:,:,i)));
-=======
 EventCSDMatrix1(:,:,i)=diff(diff(EventLFPMatrix(:,:,i)));
->>>>>>> origin/master
 end
 
 
 %% Plots
 
-<<<<<<< HEAD
 PSTHlfp1=squeeze(mean(SleepRipsLFPMatrix(:,:,:),3));
-=======
 PSTHlfp1=squeeze(mean(EventLFPMatrix(:,:,:),3));
->>>>>>> origin/master
 figure(1);
 imagesc(PSTHlfp1(:,pad*2000:end))
 ax = gca;
@@ -279,15 +265,13 @@ ax.XTickLabel = {num2str(-(pre-pad)+(ticks/2000)*1),num2str(-(pre-pad)+(ticks/20
 xlabel('Time (s)')
 ylabel('Recording Site' ) 
 
-<<<<<<< HEAD
+
 PSTHlfp2=squeeze(mean(WakeRipsLFPMatrix(:,:,:),3));
 figure(2);
 imagesc(PSTHlfp2(:,pad*2000:end))
-=======
 PSTHlfp1=squeeze(mean(EventLFPMatrix(:,:,:),3));
 figure(2);
 imagesc(PSTHlfp1(:,pad*2000:end))
->>>>>>> origin/master
 ax = gca;
 ticks=(((pre-pad+post)*2000)/10);
 ax.XTick = [ticks,ticks*2,ticks*3,ticks*4,ticks*5,ticks*6,ticks*7,ticks*8,ticks*9];
@@ -296,11 +280,9 @@ xlabel('Time (s)')
 ylabel('Recording Site' ) 
 
 
-<<<<<<< HEAD
+
 PSTHcsd1=squeeze(mean(SleepRipsCSDMatrix1(:,:,:),3));
-=======
 PSTHcsd1=squeeze(mean(EventCSDMatrix1(:,:,:),3));
->>>>>>> origin/master
 figure(3);
 imagesc(PSTHcsd1(:,pad*2000:end))
 ax = gca;
@@ -310,11 +292,9 @@ ax.XTickLabel = {num2str(-(pre-pad)+(ticks/2000)*1),num2str(-(pre-pad)+(ticks/20
 xlabel('Time (s)')
 ylabel('Recording Site (*150 equals distance from surface)' ) 
 
-<<<<<<< HEAD
+
 PSTHcsd1=squeeze(mean(WakeRipsCSDMatrix1(:,:,:),3));
-=======
 PSTHcsd1=squeeze(mean(EventCSDMatrix1(:,:,SleeRips==1),3));
->>>>>>> origin/master
 figure(4);
 imagesc(PSTHcsd1(:,pad*2000:end))
 ax = gca;
@@ -327,21 +307,18 @@ ylabel('Recording Site (*150 equals distance from surface)' )
 %% scratch
 for i = 1:size(EventLFPMatrix,3)
     figure(1)
-<<<<<<< HEAD
     plotmat(SleepRipsLFPMatrix(:,:,i));
    % imagesc(test(:,pad*2000:end,i))
 %    figure(2)
 %    plot(EventRipFrqMatrix(18,:,i))
 %    hold on
 %    plot(EventRipFrqMatrix(8,:,i),'r')
-=======
     plotmat(EventRipFrqMatrix(:,:,i));
    % imagesc(test(:,pad*2000:end,i))
    figure(2)
    plot(EventRipFrqMatrix(18,:,i))
    hold on
    plot(EventRipFrqMatrix(8,:,i),'r')
->>>>>>> origin/master
    pause
     close all
 end
@@ -351,9 +328,6 @@ tresh(HpcExclusiveTS)=HpcExclusiveTresh;
 
 tresh1(1:length(HpcEnv))=0;
 tresh1(RipTS)=RippleTresh;
-
-<<<<<<< HEAD
-
 
 SleepRipsRawMatrix=[]
 for i=1:length(SleepRipsTS)
@@ -370,5 +344,4 @@ for ii = 1:32 %loops through all Channels
 end
         end
 end
-=======
->>>>>>> origin/master
+ 
