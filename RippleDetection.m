@@ -16,14 +16,13 @@ for i=1:32;
     channelOrder(i)=OmneticsToIntan(ProbeBase2TipOmnetics(i))+1;
 end
 
-
 %% load LFP 
 
 %define the filter, in this case a 3D butterworth low-pass filter
 %(at 500hz)
 
-Cut=500; %cut off Frequency
-Fn=30000; %Sampling Rate Raw Data
+Cut=1000; %cut off Frequency
+Fn=2000; %Sampling Rate Raw Data
 [b,a]   = butter(3,Cut/Fn,'low');
 
 samplerate=2000;   % desired LFP Sampling Rate
@@ -36,13 +35,16 @@ filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filenam
 
 [Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
 
-DataDown=double(Data(1:(30000/samplerate):end)); % downsample 'Data' to 2000hz by taking every 15th sample and convert to 'double' data format (because that is needed for filtering)
+
+DataDown=resample(double(Data),1,15); % downsample 'Data' to 2000hz by taking every 15th sample and convert to 'double' data format (because that is needed for filtering)
+
 
 LFPData(i,:)=filter(b,a,DataDown); % filtering downsapled data, with filter settings above, and saving it in as "LFPData"
-end
 
-figure(1)         
-plotmat(LFPData(:,400000:402000)); 
+end
+% 
+% figure(1)         
+% plotmat(LFPData(:,400000:420000)); 
 
 %% load and plot small strech of MUAto manually look for cells 
 % and determine cell layer
@@ -50,30 +52,30 @@ plotmat(LFPData(:,400000:402000));
 %define the filter, in this case a 3D butterworth High-pass filter
 %(at 500hz)
 
-Cut=500; %cut off Frequency
-Fn=30000; %Sampling Rate Raw Data
-[d,c]   = butter(3,Cut/Fn,'high');
-
-MUAchannels=1:32;  % which channels to include, avoid ACC channels here
-
-for i = 1:length(MUAchannels) %loops through all Channels
-    
-filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filename for each channel
-
-[Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
-
-MUAData(i,:)=filter(d,c,double(Data(6000000:6030000))); % filtering downsapled data, with filter settings above, and saving it in as "LFPData"
-end
-
-VRev=repmat(mean(MUAData),32,1);
-MUAData1=MUAData-VRev;
-
-figure(2)
-plotmat(MUAData1); 
+% Cut=500; %cut off Frequency
+% Fn=30000; %Sampling Rate Raw Data
+% [d,c]   = butter(3,Cut/Fn,'high');
+% 
+% MUAchannels=1:32;  % which channels to include, avoid ACC channels here
+% 
+% for i = 1:length(MUAchannels) %loops through all Channels
+%     
+% filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filename for each channel
+% 
+% [Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
+% 
+% MUAData(i,:)=filter(d,c,double(Data(6000000:6030000))); % filtering downsapled data, with filter settings above, and saving it in as "LFPData"
+% end
+% 
+% VRev=repmat(mean(MUAData),32,1);
+% MUAData1=MUAData-VRev;
+% 
+% figure(2)
+% plotmat(MUAData1); 
 %%
 !! carefull also applies not for all Sessions approach!!
-Ctx=1; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
-Hpc=8; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
+Ctx=32; % Manually Select Cortial Channel for TFA (use MUAplot to find out)
+Hpc=4; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
 
 
 %% Load Sleep Scoring
@@ -86,13 +88,13 @@ Hpc=8; % Manually Select Hpc Pyramidal Layer Channel for TFA (")
 %define the filter, in this case a 3D butterworth bandpass filter for
 %Ripple Frequency band
 
-CutLow=150; %Low Cut off
+CutLow=120; %Low Cut off
 CutHigh=250; %High Cut Off   
-Fn=30000; % Sampling Rate Raw Data
+Fn=2000; % Sampling Rate Raw Data
 [b,a]   = butter(3,[CutLow CutHigh]/Fn,'bandpass');
-samplerate=2000;   % desired LFP Sampling Rate
+samplerate=Fn;   % desired LFP Sampling Rate
 
-LFPchannels=1:32;  % which channels to include, avoid ACC channels here
+LFPchannels=1:12;  % which channels to include, avoid ACC channels here
 
 for i =1:length(LFPchannels) %loops through all Channels
     
@@ -100,22 +102,16 @@ filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filenam
 
 [Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
 
-DataDown=double(Data(1:(30000/samplerate):end)); % downsample 'Data' to 2000hz by taking every 15th sample and convert to 'double' data format (because that is needed for filtering)
+DataDown=resample(double(Data),1,15); % downsample 'Data' to 2000hz by taking every 15th sample and convert to 'double' data format (because that is needed for filtering)
 
 RipFilt(i,:)=filter(b,a,DataDown); % filtering downsapled data, with filter settings above 
 
 end
 
-CtxEnv=envelope(RipFilt(Ctx,:))/std(mean(RipFilt([Ctx,Hpc],:))); %get Envelop of RipFilt Data, otherwise thresholding does not work
-HpcEnv=envelope(RipFilt(Hpc,:))/std(mean(RipFilt([Ctx,Hpc],:)));    %get Envelop of RipFilt Data, otherwise thresholding does not work
-HpcEx=HpcEnv-CtxEnv;
+HpcEnv=envelope(RipFilt(Hpc,:));   %get Envelop of RipFilt Data, otherwise thresholding does not work
+% HpcEx=HpcEnv-CtxEnv;
 
-Trs=5; % Set Threshold for Rip detection manually as multiple of Std 
-RippleTresh=std(HpcEnv)*Trs;
-% Thresholding by looping through data and asking wheter i is bigger than
-% threshold and i-1 is still smaller or equal to threshold, this way we get only upward
-
-Trs=1; % Set Threshold for Rip detection manually as multiple of Std 
+Trs=8; % Set Threshold for Rip detection manually as multiple of Std 
 RippleTresh=std(HpcEnv)*Trs;
 % Thresholding by looping through data and asking wheter i is bigger than
 % threshold and i-1 is still >= threshold, this way we get only upward
@@ -141,9 +137,7 @@ plot(tresh)
 hold on
 tresh1(1:length(RipCrossings))=0;
 
-tresh1(SleepLong)=5;
-
-tresh1(SleepLong)=50;
+tresh1(SleepLong)=RippleTresh/2;
 
 plot(tresh1,'k')
 
@@ -272,43 +266,28 @@ xlabel('Time (s)')
 ylabel('Recording Site (*150 equals distance from surface)' ) 
 
 %% scratch
-for i = 1:size(EventLFPMatrix,3)
-    figure(1)
-    plotmat(SleepRipsLFPMatrix(:,:,i));
-   % imagesc(test(:,pad*2000:end,i))
-%    figure(2)
-%    plot(EventRipFrqMatrix(18,:,i))
-%    hold on
-%    plot(EventRipFrqMatrix(8,:,i),'r')
-    plotmat(EventRipFrqMatrix(:,:,i));
-   % imagesc(test(:,pad*2000:end,i))
-   figure(2)
-   plot(EventRipFrqMatrix(18,:,i))
-   hold on
-   plot(EventRipFrqMatrix(8,:,i),'r')
+for i = 1:size(SleepRipsLFPMatrix,3)
+    
+    plotmat(WakeRipsLFPMatrix(:,pad*2000:end,i));
+
    pause
     close all
 end
 
-tresh(1:length(HpcExclusiveCrossings))=0;
-tresh(HpcExclusiveTS)=HpcExclusiveTresh;
 
-tresh1(1:length(HpcEnv))=0;
-tresh1(RipTS)=RippleTresh;
 
-SleepRipsRawMatrix=[]
-for i=1:length(SleepRipsTS)
-    
-        if ((SleepRipsTS(i)-((pre*2000)-1))>0&&(SleepRipsTS(i)+(post*2000))<size(LFPData,2))      %filtering out events for which the pre post cut off would violate recording bounds    
-    
-for ii = 1:32 %loops through all Channels
-    
-        filename=['100_CH',num2str(channelOrder(i)),'.continuous']; %creates the filename for each channel
+tresh1(1:length(RipCrossings))=-120000;
+tresh1(Sleep)=1000;
+plotmat(LFPData(:,5000000:5200000));
+hold on
+c=plot(tresh1(5000000:5200000),'k')
+c.set('Linewidth',1.5)
+figure(2)
+tresh1(1:length(RipCrossings))=-10000;
+tresh1(Sleep)=1000;
+plotmat(RipFilt(:,5000000:5200000));
+hold on
+c=plot(tresh1(5000000:5200000),'k')
+c.set('Linewidth',1.5)
 
-        [Data] = load_open_ephys(filename); % open ephys function reads individual channel voltage trace data into vector "Data"
 
-        SleepRipsRawMatrix(ii,:,i)=Data(SleepRipsTS(i)*15-(pre*30000)-1:(SleepRipsTS(i)*15+post*30000));
-end
-        end
-end
- 
