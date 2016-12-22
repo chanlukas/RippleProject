@@ -14,7 +14,7 @@ for i=1:size(data,1)
     if i==1
     DataMat(i,:)=data(i,:);
     else
-    DataMat(i,:)=data(i,:)+(limit*i);
+    DataMat(i,:)=data(i,:)-(limit*i);
     end
     plot(DataMat(i,:))
     hold on
